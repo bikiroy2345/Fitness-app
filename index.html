@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FitForge – Fitness App</title>
+<style>
+/* ============================================================
+   CSS VARIABLES & RESET
+   ============================================================ */
+:root {
+  --bg:        #0a0c10;
+  --bg2:       #0f1218;
+  --bg3:       #151923;
+  --surface:   rgba(255,255,255,0.04);
+  --border:    rgba(255,255,255,0.08);
+  --accent:    #e8ff47;
+  --accent2:   #ff5757;
+  --accent3:   #47d4ff;
+  --text:      #f0f4ff;
+  --muted:     #7a8499;
+  --radius:    14px;
+  --radius-lg: 24px;
+  --font-head: 'Georgia', 'Times New Roman', serif;
+  --font-body: 'Segoe UI', system-ui, sans-serif;
+  --trans:     0.35s cubic-bezier(.4,0,.2,1);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+img, svg { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+input, textarea, select { font-family: inherit; }
+ul { list-style: none; }
+
+/* ============================================================
+   PRELOADER
+   ============================================================ */
+#preloader {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity .6s ease, visibility .6s ease;
+}
+#preloader.hide { opacity: 0; visibility: hidden; }
+.pre-ring {
+  width: 60px; height: 60px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   SCROLL REVEAL
+   ============================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity .7s ease, transform .7s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
+
+/* ============================================================
+   UTILITY
+   ============================================================ */
+.container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+.section-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 14px;
+}
+.section-label::before {
+  content:''; width: 28px; height: 2px; background: var(--accent);
+}
+h2.section-title {
+  font-family: var(--font-head);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 700; line-height: 1.15;
+  margin-bottom: 16px;
+}
+.section-sub {
+  color: var(--muted); font-size: 1.05rem; max-width: 540px;
+}
+section { padding: 100px 0; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 28px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 24px; }
+@media(max-width:900px){
+  .grid-3,.grid-4 { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width:600px){
+  .grid-2,.grid-3,.grid-4 { grid-template-columns: 1fr; }
+  section { padding: 70px 0; }
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 28px; border-radius: 50px;
+  font-size: .95rem; font-weight: 700;
+  letter-spacing: .04em; border: none;
+  transition: var(--trans);
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent); color: #0a0c10;
+}
+.btn-primary:hover {
+  background: #fff; transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(232,255,71,.35);
+}
+.btn-outline {
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,.22);
+  color: var(--text);
+}
+.btn-outline:hover {
+  border-color: var(--accent); color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* ============================================================
+   CARD (glass)
+   ============================================================ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px 28px;
+  backdrop-filter: blur(14px);
+  transition: var(--trans);
+}
+.card:hover {
+  border-color: rgba(232,255,71,.3);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 48px rgba(0,0,0,.4);
+}
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+#navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+  padding: 0 24px;
+  transition: background .4s ease, box-shadow .4s ease;
+}
+#navbar.scrolled {
+  background: rgba(10,12,16,.88);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 1px 0 var(--border);
+}
+.nav-inner {
+  max-width: 1160px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 68px;
+}
+.nav-logo {
+  font-family: var(--font-head); font-size: 1.5rem; font-weight: 700;
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo span { color: var(--accent); }
+.nav-logo svg { color: var(--accent); }
+.nav-links {
+  display: flex; align-items: center; gap: 36px;
+}
+.nav-links a {
+  font-size: .88rem; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+  transition: color .25s;
+}
+.nav-links a:hover { color: var(--accent); }
+.nav-cta { margin-left: 12px; }
+
+/* hamburger */
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: none; padding: 6px; cursor: pointer;
+}
+.hamburger span {
+  width: 24px; height: 2px; background: var(--text);
+  border-radius: 2px; transition: var(--trans);
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* mobile menu */
+.mobile-menu {
+  display: none; position: fixed;
+  top: 68px; left: 0; right: 0;
+  background: rgba(10,12,16,.96);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 24px; flex-direction: column; gap: 20px;
+  z-index: 899;
+}
+.mobile-menu.open { display: flex; }
+.mobile-menu a {
+  font-size: 1rem; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em;
+  transition: color .2s;
+}
+.mobile-menu a:hover { color: var(--accent); }
+
+@media(max-width:840px){
+  .nav-links, .nav-cta { display: none; }
+  .hamburger { display: flex; }
+}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+#hero {
+  min-height: 100vh;
+  display: flex; align-items: center;
+  position: relative; overflow: hidden;
+  padding: 100px 24px 60px;
+}
+.hero-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 55% at 70% 40%, rgba(232,255,71,.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 20% 60%, rgba(71,212,255,.07) 0%, transparent 70%),
+    linear-gradient(165deg, #0f1218 0%, #0a0c10 60%, #0d1016 100%);
+}
+.hero-grid {
+  position: absolute; inset: 0; z-index: 0;
+  background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, black, transparent);
+}
+.hero-inner {
+  position: relative; z-index: 1;
+  max-width: 1160px; margin: 0 auto; width: 100%;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+}
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(232,255,71,.1); border: 1px solid rgba(232,255,71,.2);
+  border-radius: 50px; padding: 6px 16px;
+  font-size: .78rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: 24px;
+}
+.hero-tag::before { content:'●'; font-size: .5rem; }
+h1.hero-title {
+  font-family: var(--font-head);
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  line-height: 1.05; font-weight: 700;
+  margin-bottom: 22px;
+}
+h1.hero-title em { color: var(--accent); font-style: normal; }
+.hero-sub {
+  font-size: 1.1rem; color: var(--muted); max-width: 460px;
+  margin-bottom: 38px; line-height: 1.7;
+}
+.hero-btns { display: flex; gap: 14px; flex-wrap: wrap; }
+.hero-stats {
+  display: flex; gap: 36px; margin-top: 52px; flex-wrap: wrap;
+}
+.hero-stat-num {
+  font-family: var(--font-head);
+  font-size: 2.2rem; font-weight: 700; color: var(--text);
+  line-height: 1;
+}
+.hero-stat-num span { color: var(--accent); }
+.hero-stat-label { font-size: .78rem; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* hero visual */
+.hero-visual {
+  display: flex; justify-content: center; align-items: center;
+}
+.hero-ring-wrap {
+  position: relative; width: 340px; height: 340px;
+}
+.hero-ring-wrap .ring {
+  position: absolute; border-radius: 50%;
+  border: 1.5px solid;
+  animation: rotateCW 12s linear infinite;
+}
+.ring-1 { inset: 0; border-color: rgba(232,255,71,.18); }
+.ring-2 { inset: 22px; border-color: rgba(71,212,255,.14); animation-direction: reverse; animation-duration: 9s; }
+.ring-3 { inset: 44px; border-color: rgba(255,87,87,.12); animation-duration: 15s; }
+@keyframes rotateCW { to { transform: rotate(360deg); } }
+.hero-ring-center {
+  position: absolute; inset: 66px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #1c2232, #0f1218);
+  border: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px;
+  box-shadow: 0 0 60px rgba(232,255,71,.1), inset 0 0 30px rgba(0,0,0,.5);
+}
+.hero-ring-center .icon-big {
+  font-size: 3rem; line-height: 1;
+}
+.hero-ring-center p { font-size: .78rem; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+.hero-ring-center strong { font-family: var(--font-head); font-size: 1.6rem; color: var(--accent); }
+
+/* floating chips */
+.hero-chip {
+  position: absolute;
+  background: rgba(15,18,24,.92);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 8px 16px;
+  font-size: .78rem; font-weight: 600;
+  backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+.chip-1 { top: 28px; left: -30px; color: var(--accent); border-color: rgba(232,255,71,.25); animation: floatA 4s ease-in-out infinite; }
+.chip-2 { bottom: 60px; right: -20px; color: var(--accent3); border-color: rgba(71,212,255,.25); animation: floatB 4.5s ease-in-out infinite; }
+.chip-3 { bottom: 10px; left: 0; color: var(--accent2); border-color: rgba(255,87,87,.25); animation: floatA 5s ease-in-out infinite 1s; }
+@keyframes floatA { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes floatB { 0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)} }
+
+@media(max-width:900px){
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-visual { display: none; }
+}
+
+/* ============================================================
+   FEATURES
+   ============================================================ */
+#features { background: var(--bg2); }
+.features-head { text-align: center; margin-bottom: 56px; }
+.features-head .section-sub { margin: 0 auto; }
+.feat-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; margin-bottom: 20px;
+}
+.feat-icon.y { background: rgba(232,255,71,.1); }
+.feat-icon.b { background: rgba(71,212,255,.1); }
+.feat-icon.r { background: rgba(255,87,87,.1); }
+.feat-icon.g { background: rgba(71,255,140,.1); }
+.card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 10px; }
+.card p  { color: var(--muted); font-size: .93rem; line-height: 1.65; }
+
+/* ============================================================
+   BMI CALCULATOR
+   ============================================================ */
+#bmi { background: var(--bg3); }
+.bmi-wrap {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+}
+.bmi-left h2 { margin-bottom: 14px; }
+.bmi-left p { color: var(--muted); margin-bottom: 32px; }
+.bmi-form { display: flex; flex-direction: column; gap: 20px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-group label { font-size: .82rem; font-weight: 700; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.form-group input, .form-group select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 13px 16px; color: var(--text);
+  font-size: .95rem; outline: none;
+  transition: border-color .25s;
+}
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--accent);
+}
+.bmi-result-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 40px 36px;
+  text-align: center;
+  min-height: 280px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px;
+}
+.bmi-num {
+  font-family: var(--font-head);
+  font-size: 5rem; font-weight: 700; line-height: 1;
+  color: var(--accent);
+}
+.bmi-category {
+  font-size: 1.1rem; font-weight: 700; letter-spacing: .08em;
+}
+.bmi-bar-track {
+  width: 100%; height: 8px;
+  background: var(--border); border-radius: 8px; overflow: hidden;
+}
+.bmi-bar-fill {
+  height: 100%; width: 0;
+  border-radius: 8px;
+  transition: width .8s ease, background .4s ease;
+}
+.bmi-tip { font-size: .85rem; color: var(--muted); max-width: 240px; line-height: 1.5; }
+@media(max-width:800px){ .bmi-wrap { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   WORKOUT PLANS
+   ============================================================ */
+#plans { background: var(--bg2); }
+.plans-head { text-align: center; margin-bottom: 56px; }
+.plan-card {
+  position: relative; overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 36px 28px;
+  cursor: pointer;
+  transition: var(--trans);
+}
+.plan-card::before {
+  content:'';
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity .35s;
+}
+.plan-card.beginner::before { background: radial-gradient(circle at 50% 0%, rgba(71,212,255,.1), transparent 70%); }
+.plan-card.intermediate::before { background: radial-gradient(circle at 50% 0%, rgba(232,255,71,.1), transparent 70%); }
+.plan-card.advanced::before { background: radial-gradient(circle at 50% 0%, rgba(255,87,87,.1), transparent 70%); }
+.plan-card:hover { transform: translateY(-8px); }
+.plan-card:hover::before { opacity: 1; }
+.plan-card:hover { border-color: rgba(255,255,255,.2); box-shadow: 0 24px 56px rgba(0,0,0,.45); }
+.plan-badge {
+  display: inline-block; padding: 5px 14px;
+  border-radius: 50px; font-size: .72rem; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; margin-bottom: 24px;
+}
+.plan-card.beginner .plan-badge   { background: rgba(71,212,255,.12); color: var(--accent3); }
+.plan-card.intermediate .plan-badge { background: rgba(232,255,71,.12); color: var(--accent); }
+.plan-card.advanced .plan-badge   { background: rgba(255,87,87,.12); color: var(--accent2); }
+.plan-card h3 { font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; }
+.plan-card .plan-sub { color: var(--muted); font-size: .9rem; margin-bottom: 24px; }
+.plan-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+.plan-item {
+  display: flex; align-items: center; gap: 10px;
+  font-size: .88rem; color: var(--muted);
+}
+.plan-item::before { content:'✓'; color: var(--accent); font-weight: 700; }
+.plan-card.beginner .plan-item::before { color: var(--accent3); }
+.plan-card.advanced .plan-item::before { color: var(--accent2); }
+
+/* ============================================================
+   STATS / COUNTERS
+   ============================================================ */
+#stats {
+  background: linear-gradient(135deg, #0f1218 0%, #131820 100%);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 80px 24px;
+}
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 40px;
+  text-align: center;
+}
+.stat-item { position: relative; }
+.stat-item::after {
+  content:''; position: absolute; right: 0; top: 20%; bottom: 20%;
+  width: 1px; background: var(--border);
+}
+.stat-item:last-child::after { display: none; }
+.stat-count {
+  font-family: var(--font-head);
+  font-size: clamp(2.4rem, 4vw, 3.8rem);
+  font-weight: 700; color: var(--text); line-height: 1;
+}
+.stat-count .accent-suf { color: var(--accent); }
+.stat-label { font-size: .82rem; color: var(--muted); margin-top: 8px; text-transform: uppercase; letter-spacing: .1em; }
+@media(max-width:700px){
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stat-item::after { display: none; }
+}
+
+/* ============================================================
+   TESTIMONIALS
+   ============================================================ */
+#testimonials { background: var(--bg3); }
+.testimonials-head { text-align: center; margin-bottom: 56px; }
+.testi-card { position: relative; }
+.testi-quote {
+  font-size: 2.4rem; line-height: 1; color: var(--accent); margin-bottom: 14px;
+}
+.testi-text { font-size: .95rem; color: var(--muted); line-height: 1.75; margin-bottom: 24px; }
+.testi-author { display: flex; align-items: center; gap: 14px; }
+.testi-avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1rem; flex-shrink: 0;
+}
+.av-y { background: rgba(232,255,71,.15); color: var(--accent); }
+.av-b { background: rgba(71,212,255,.15); color: var(--accent3); }
+.av-r { background: rgba(255,87,87,.15); color: var(--accent2); }
+.testi-name { font-weight: 700; font-size: .95rem; }
+.testi-role { font-size: .78rem; color: var(--muted); }
+.stars { color: var(--accent); letter-spacing: 2px; margin-bottom: 8px; font-size: .85rem; }
+
+/* ============================================================
+   CONTACT
+   ============================================================ */
+#contact { background: var(--bg2); }
+.contact-wrap { display: grid; grid-template-columns: 1fr 1.3fr; gap: 56px; align-items: start; }
+.contact-info h2 { margin-bottom: 14px; }
+.contact-info p { color: var(--muted); margin-bottom: 36px; }
+.contact-item {
+  display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px;
+}
+.contact-icon {
+  width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+  background: rgba(232,255,71,.08);
+  border: 1px solid rgba(232,255,71,.15);
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+}
+.contact-item h4 { font-size: .88rem; font-weight: 700; margin-bottom: 3px; }
+.contact-item p { font-size: .85rem; color: var(--muted); margin: 0; }
+
+.contact-form { display: flex; flex-direction: column; gap: 18px; }
+.contact-form input, .contact-form textarea, .contact-form select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px; color: var(--text);
+  font-size: .95rem; outline: none;
+  transition: border-color .25s;
+  resize: none;
+}
+.contact-form input::placeholder, .contact-form textarea::placeholder { color: var(--muted); }
+.contact-form input:focus, .contact-form textarea:focus { border-color: var(--accent); }
+.contact-form textarea { min-height: 130px; }
+.form-error { font-size: .8rem; color: var(--accent2); margin-top: -10px; display: none; }
+.form-success {
+  display: none; padding: 14px 18px;
+  background: rgba(71,255,140,.08);
+  border: 1px solid rgba(71,255,140,.2);
+  border-radius: var(--radius); color: #47ff8c;
+  font-size: .9rem; font-weight: 600; text-align: center;
+}
+@media(max-width:860px){ .contact-wrap { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 56px 24px 36px;
+}
+.footer-inner {
+  max-width: 1160px; margin: 0 auto;
+  display: grid; grid-template-columns: 1.8fr 1fr 1fr 1fr;
+  gap: 40px; padding-bottom: 48px;
+  border-bottom: 1px solid var(--border);
+}
+.footer-brand p { color: var(--muted); font-size: .88rem; line-height: 1.7; margin: 12px 0 24px; max-width: 240px; }
+.social-links { display: flex; gap: 10px; }
+.social-link {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; transition: var(--trans);
+}
+.social-link:hover { background: rgba(232,255,71,.1); border-color: rgba(232,255,71,.3); color: var(--accent); transform: translateY(-2px); }
+.footer-col h4 { font-weight: 700; font-size: .88rem; margin-bottom: 18px; letter-spacing: .06em; text-transform: uppercase; }
+.footer-col ul li { margin-bottom: 10px; }
+.footer-col ul li a { font-size: .88rem; color: var(--muted); transition: color .2s; }
+.footer-col ul li a:hover { color: var(--accent); }
+.footer-bottom {
+  max-width: 1160px; margin: 32px auto 0;
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.footer-bottom p { font-size: .83rem; color: var(--muted); }
+.footer-bottom .made { display: flex; align-items: center; gap: 6px; font-size: .83rem; color: var(--muted); }
+.footer-bottom .made span { color: var(--accent2); }
+@media(max-width:800px){
+  .footer-inner { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width:480px){
+  .footer-inner { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   DECORATIVE SVG DIVIDERS
+   ============================================================ */
+.divider { line-height: 0; overflow: hidden; }
+.divider svg { width: 100%; height: 50px; display: block; }
+
+/* ============================================================
+   WORKOUT LOG — CRUD SECTION
+   ============================================================ */
+#workout-log { background: var(--bg); }
+.wl-head { text-align: center; margin-bottom: 56px; }
+.wl-head .section-sub { margin: 0 auto; }
+
+/* ── ADD / EDIT FORM ── */
+.wl-form-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 36px 32px;
+  margin-bottom: 40px;
+  backdrop-filter: blur(14px);
+  position: relative;
+  overflow: hidden;
+}
+.wl-form-wrap::before {
+  content:'';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent3), var(--accent2));
+}
+.wl-form-title {
+  font-family: var(--font-head); font-size: 1.2rem; font-weight: 700;
+  margin-bottom: 24px; display: flex; align-items: center; gap: 10px;
+}
+.wl-form-title span { color: var(--accent); }
+.wl-form-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px; margin-bottom: 16px;
+}
+.wl-form-grid-2 {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 16px; margin-bottom: 16px;
+}
+.wl-form-full { margin-bottom: 16px; }
+.wl-label {
+  display: block; font-size: .78rem; font-weight: 700;
+  color: var(--muted); letter-spacing: .1em; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.wl-input, .wl-select, .wl-textarea {
+  width: 100%;
+  background: rgba(255,255,255,.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px; color: var(--text);
+  font-size: .93rem; outline: none;
+  transition: border-color .25s, box-shadow .25s;
+}
+.wl-input::placeholder, .wl-textarea::placeholder { color: var(--muted); }
+.wl-input:focus, .wl-select:focus, .wl-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(232,255,71,.1);
+}
+.wl-select option { background: #151923; color: var(--text); }
+.wl-textarea { min-height: 80px; resize: vertical; }
+.wl-form-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+.btn-save {
+  background: var(--accent); color: #0a0c10;
+  border: none; border-radius: 50px;
+  padding: 12px 28px; font-size: .9rem; font-weight: 700;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+  transition: var(--trans);
+}
+.btn-save:hover { background: #fff; transform: translateY(-2px); box-shadow: 0 10px 28px rgba(232,255,71,.3); }
+.btn-cancel-edit {
+  background: transparent; border: 1.5px solid rgba(255,255,255,.15);
+  color: var(--muted); border-radius: 50px;
+  padding: 12px 24px; font-size: .9rem; font-weight: 600;
+  cursor: pointer; transition: var(--trans); display: none;
+}
+.btn-cancel-edit:hover { border-color: var(--accent2); color: var(--accent2); }
+.btn-cancel-edit.visible { display: inline-flex; }
+.wl-save-flash {
+  display: none; align-items: center; gap: 8px;
+  color: #47ff8c; font-size: .88rem; font-weight: 600;
+  padding: 10px 18px;
+  background: rgba(71,255,140,.07);
+  border: 1px solid rgba(71,255,140,.2);
+  border-radius: 50px;
+}
+.wl-save-flash.show { display: inline-flex; }
+
+/* ── FILTER BAR ── */
+.wl-controls {
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 28px;
+}
+.wl-search-wrap { position: relative; flex: 1; min-width: 200px; }
+.wl-search-wrap svg {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+}
+.wl-search {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 11px 18px 11px 42px;
+  color: var(--text); font-size: .9rem; outline: none;
+  transition: border-color .25s;
+}
+.wl-search:focus { border-color: var(--accent); }
+.wl-search::placeholder { color: var(--muted); }
+.wl-filter-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 11px 20px; color: var(--text);
+  font-size: .88rem; font-weight: 600; outline: none;
+  cursor: pointer; transition: border-color .25s;
+}
+.wl-filter-select:focus { border-color: var(--accent); }
+.wl-filter-select option { background: #151923; }
+.wl-count-badge {
+  background: rgba(232,255,71,.1);
+  border: 1px solid rgba(232,255,71,.2);
+  color: var(--accent); border-radius: 50px;
+  padding: 8px 18px; font-size: .82rem; font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── LOG TABLE ── */
+.wl-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.wl-table {
+  width: 100%; border-collapse: collapse;
+}
+.wl-table thead {
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid var(--border);
+}
+.wl-table th {
+  padding: 14px 18px; text-align: left;
+  font-size: .74rem; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+  cursor: pointer; user-select: none;
+  transition: color .2s;
+}
+.wl-table th:hover { color: var(--accent); }
+.wl-table th .sort-icon { margin-left: 4px; opacity: .5; }
+.wl-table th.sorted { color: var(--accent); }
+.wl-table th.sorted .sort-icon { opacity: 1; }
+.wl-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  transition: background .2s;
+}
+.wl-table tbody tr:last-child { border-bottom: none; }
+.wl-table tbody tr:hover { background: rgba(255,255,255,.03); }
+.wl-table tbody tr.editing-row {
+  background: rgba(232,255,71,.04);
+  border-bottom: 1px solid rgba(232,255,71,.15);
+}
+.wl-table td {
+  padding: 16px 18px; font-size: .9rem;
+  vertical-align: middle;
+}
+.wl-date-cell { color: var(--muted); font-size: .82rem; }
+.wl-exercise-cell { font-weight: 600; }
+.wl-cat-pill {
+  display: inline-block; padding: 4px 12px;
+  border-radius: 50px; font-size: .72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.cat-strength  { background: rgba(232,255,71,.1);  color: var(--accent); }
+.cat-cardio    { background: rgba(71,212,255,.1);  color: var(--accent3); }
+.cat-hiit      { background: rgba(255,87,87,.1);   color: var(--accent2); }
+.cat-mobility  { background: rgba(71,255,140,.1);  color: #47ff8c; }
+.cat-other     { background: rgba(150,150,150,.1); color: var(--muted); }
+.wl-sets-cell, .wl-reps-cell, .wl-weight-cell, .wl-dur-cell {
+  font-variant-numeric: tabular-nums;
+}
+.wl-note-cell { color: var(--muted); font-size: .82rem; max-width: 160px; }
+.wl-note-cell span { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+.wl-actions-cell { white-space: nowrap; }
+.btn-edit, .btn-delete {
+  border: none; border-radius: 8px; cursor: pointer;
+  padding: 7px 12px; font-size: .78rem; font-weight: 700;
+  letter-spacing: .04em; transition: var(--trans);
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.btn-edit {
+  background: rgba(71,212,255,.1); color: var(--accent3);
+  margin-right: 6px;
+}
+.btn-edit:hover { background: rgba(71,212,255,.2); transform: translateY(-1px); }
+.btn-delete { background: rgba(255,87,87,.1); color: var(--accent2); }
+.btn-delete:hover { background: rgba(255,87,87,.22); transform: translateY(-1px); }
+
+/* ── EMPTY STATE ── */
+.wl-empty {
+  text-align: center; padding: 60px 24px;
+  color: var(--muted);
+}
+.wl-empty svg { margin: 0 auto 18px; opacity: .18; }
+.wl-empty p { font-size: .93rem; }
+
+/* ── SUMMARY STRIP ── */
+.wl-summary {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 20px; margin-bottom: 32px;
+}
+.wl-sum-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px 20px;
+  text-align: center; transition: var(--trans);
+}
+.wl-sum-card:hover { border-color: rgba(232,255,71,.25); transform: translateY(-3px); }
+.wl-sum-num {
+  font-family: var(--font-head); font-size: 2rem; font-weight: 700;
+  color: var(--accent); line-height: 1;
+}
+.wl-sum-label { font-size: .74rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 6px; }
+
+/* ── DELETE CONFIRM MODAL ── */
+.wl-modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,.7); backdrop-filter: blur(6px);
+  align-items: center; justify-content: center;
+}
+.wl-modal-overlay.open { display: flex; }
+.wl-modal {
+  background: #151923; border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 40px 36px;
+  max-width: 400px; width: 90%; text-align: center;
+  animation: modalIn .25s ease;
+}
+@keyframes modalIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.wl-modal h3 { font-size: 1.25rem; margin-bottom: 12px; }
+.wl-modal p { color: var(--muted); font-size: .9rem; margin-bottom: 28px; }
+.wl-modal-actions { display: flex; gap: 12px; justify-content: center; }
+.btn-confirm-del {
+  background: var(--accent2); color: #fff; border: none;
+  border-radius: 50px; padding: 11px 26px;
+  font-size: .9rem; font-weight: 700; cursor: pointer; transition: var(--trans);
+}
+.btn-confirm-del:hover { background: #ff3a3a; transform: translateY(-2px); }
+.btn-cancel-del {
+  background: transparent; border: 1.5px solid var(--border);
+  color: var(--muted); border-radius: 50px;
+  padding: 11px 24px; font-size: .9rem; font-weight: 600;
+  cursor: pointer; transition: var(--trans);
+}
+.btn-cancel-del:hover { border-color: var(--text); color: var(--text); }
+
+@media(max-width:900px){
+  .wl-form-grid { grid-template-columns: 1fr 1fr; }
+  .wl-summary { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width:640px){
+  .wl-form-grid, .wl-form-grid-2 { grid-template-columns: 1fr; }
+  .wl-summary { grid-template-columns: 1fr 1fr; }
+  .wl-table th:nth-child(4),
+  .wl-table td:nth-child(4),
+  .wl-table th:nth-child(5),
+  .wl-table td:nth-child(5),
+  .wl-table th:nth-child(7),
+  .wl-table td:nth-child(7) { display: none; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PRELOADER
+     ============================================================ -->
+<div id="preloader">
+  <div class="pre-ring"></div>
+</div>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#hero" class="nav-logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+        <rect x="2" y="10" width="5" height="6" rx="2" fill="currentColor"/>
+        <rect x="19" y="10" width="5" height="6" rx="2" fill="currentColor"/>
+        <rect x="7" y="8" width="12" height="10" rx="3" fill="currentColor" opacity=".7"/>
+        <rect x="11" y="4" width="4" height="4" rx="2" fill="currentColor" opacity=".4"/>
+      </svg>
+      Fit<span>Forge</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#bmi">BMI</a></li>
+      <li><a href="#plans">Plans</a></li>
+      <li><a href="#stats">Stats</a></li>
+      <li><a href="#testimonials">Reviews</a></li>
+      <li><a href="#workout-log">Workout Log</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="btn btn-primary nav-cta" style="padding:10px 22px;font-size:.85rem;">Get Started</a>
+    <button class="hamburger" id="hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- mobile menu -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#features" class="mob-link">Features</a>
+  <a href="#bmi" class="mob-link">BMI Calculator</a>
+  <a href="#plans" class="mob-link">Plans</a>
+  <a href="#stats" class="mob-link">Stats</a>
+  <a href="#testimonials" class="mob-link">Reviews</a>
+  <a href="#workout-log" class="mob-link">Workout Log</a>
+  <a href="#contact" class="mob-link">Contact</a>
+  <a href="#contact" class="btn btn-primary" style="align-self:flex-start">Get Started</a>
+</div>
+
+<!-- ============================================================
+     HERO
+     ============================================================ -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-content">
+      <div class="hero-tag">&#9679; Transform Your Body &amp; Mind</div>
+      <h1 class="hero-title">Forge Your<br><em>Strongest</em><br>Self</h1>
+      <p class="hero-sub">Science-backed workouts, precision nutrition, and real-time analytics — everything you need to hit your peak performance.</p>
+      <div class="hero-btns">
+        <a href="#plans" class="btn btn-primary">
+          <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Start Training
+        </a>
+        <a href="#bmi" class="btn btn-outline">Check Your BMI</a>
+      </div>
+      <div class="hero-stats">
+        <div>
+          <div class="hero-stat-num"><span>50</span>K<span>+</span></div>
+          <div class="hero-stat-label">Active Users</div>
+        </div>
+        <div>
+          <div class="hero-stat-num"><span>200</span><span>+</span></div>
+          <div class="hero-stat-label">Workout Plans</div>
+        </div>
+        <div>
+          <div class="hero-stat-num"><span>98</span><span>%</span></div>
+          <div class="hero-stat-label">Satisfaction</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-ring-wrap">
+        <div class="ring ring-1"></div>
+        <div class="ring ring-2"></div>
+        <div class="ring ring-3"></div>
+        <div class="hero-ring-center">
+          <div class="icon-big">🏋️</div>
+          <p>Daily Goal</p>
+          <strong>87%</strong>
+        </div>
+        <div class="hero-chip chip-1">🔥 &nbsp;Streak: 14 days</div>
+        <div class="hero-chip chip-2">💪 &nbsp;+2.3kg muscle</div>
+        <div class="hero-chip chip-3">⚡ &nbsp;Active now</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FEATURES
+     ============================================================ -->
+<section id="features">
+  <div class="container">
+    <div class="features-head reveal">
+      <div class="section-label">What We Offer</div>
+      <h2 class="section-title">Everything You Need<br>to Reach Peak Performance</h2>
+      <p class="section-sub">A comprehensive toolkit built for serious athletes and beginners alike.</p>
+    </div>
+    <div class="grid-4">
+      <div class="card reveal">
+        <div class="feat-icon y">🏃</div>
+        <h3>Workout Tracking</h3>
+        <p>Log every rep, set, and mile. Visualise your progress with intuitive charts and weekly summaries.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon b">🥗</div>
+        <h3>Nutrition Plans</h3>
+        <p>Personalised macro targets, meal ideas, and calorie tracking synced with your daily workouts.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon r">📊</div>
+        <h3>Progress Analytics</h3>
+        <p>Deep insights into strength gains, body composition, and performance trends over time.</p>
+      </div>
+      <div class="card reveal">
+        <div class="feat-icon g">🧑‍💼</div>
+        <h3>Personal Coaching</h3>
+        <p>AI-powered coaching that adapts to your pace and delivers real-time technique feedback.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     BMI CALCULATOR
+     ============================================================ -->
+<section id="bmi">
+  <div class="container">
+    <div class="bmi-wrap">
+      <div class="bmi-left reveal">
+        <div class="section-label">BMI Calculator</div>
+        <h2 class="section-title">Know Your<br>Baseline</h2>
+        <p>Enter your height and weight to instantly calculate your Body Mass Index and get personalised advice.</p>
+        <div class="bmi-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bmi-height">Height</label>
+              <input type="number" id="bmi-height" placeholder="e.g. 175" min="50" max="250"/>
+            </div>
+            <div class="form-group">
+              <label for="bmi-height-unit">Unit</label>
+              <select id="bmi-height-unit">
+                <option value="cm">cm</option>
+                <option value="ft">ft</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bmi-weight">Weight</label>
+              <input type="number" id="bmi-weight" placeholder="e.g. 70" min="10" max="300"/>
+            </div>
+            <div class="form-group">
+              <label for="bmi-weight-unit">Unit</label>
+              <select id="bmi-weight-unit">
+                <option value="kg">kg</option>
+                <option value="lbs">lbs</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="calcBMI()" style="align-self:flex-start">
+            Calculate BMI
+          </button>
+        </div>
+      </div>
+
+      <div class="bmi-result-panel reveal" id="bmiPanel">
+        <p style="color:var(--muted);font-size:.9rem">Enter your details and hit calculate</p>
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" style="opacity:.15">
+          <circle cx="40" cy="40" r="36" stroke="white" stroke-width="2"/>
+          <path d="M28 50 Q40 28 52 50" stroke="white" stroke-width="2" fill="none"/>
+          <circle cx="40" cy="36" r="4" fill="white"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     WORKOUT PLANS
+     ============================================================ -->
+<section id="plans">
+  <div class="container">
+    <div class="plans-head reveal">
+      <div class="section-label">Training Tiers</div>
+      <h2 class="section-title">Choose Your<br>Challenge</h2>
+      <p class="section-sub">Three structured programmes designed to meet you exactly where you are.</p>
+    </div>
+    <div class="grid-3" style="margin-top:48px">
+      <div class="plan-card beginner reveal">
+        <div class="plan-badge">Beginner</div>
+        <h3>Foundation Build</h3>
+        <p class="plan-sub">Perfect for those just starting their fitness journey.</p>
+        <ul class="plan-items">
+          <li class="plan-item">3 sessions per week</li>
+          <li class="plan-item">Full-body compound lifts</li>
+          <li class="plan-item">30–45 min per session</li>
+          <li class="plan-item">Form-first tutorials</li>
+          <li class="plan-item">Recovery guidance</li>
+        </ul>
+        <a href="#contact" class="btn btn-outline" style="border-color:rgba(71,212,255,.3);color:var(--accent3)">Start Free →</a>
+      </div>
+      <div class="plan-card intermediate reveal" style="transition-delay:.1s">
+        <div class="plan-badge">Intermediate</div>
+        <h3>Power Surge</h3>
+        <p class="plan-sub">Ready to level up your strength and endurance.</p>
+        <ul class="plan-items">
+          <li class="plan-item">5 sessions per week</li>
+          <li class="plan-item">Push/pull/legs split</li>
+          <li class="plan-item">45–60 min per session</li>
+          <li class="plan-item">Progressive overload</li>
+          <li class="plan-item">Nutrition integration</li>
+        </ul>
+        <a href="#contact" class="btn btn-primary">Get Started →</a>
+      </div>
+      <div class="plan-card advanced reveal" style="transition-delay:.2s">
+        <div class="plan-badge">Advanced</div>
+        <h3>Elite Protocol</h3>
+        <p class="plan-sub">High-intensity programme for peak performance.</p>
+        <ul class="plan-items">
+          <li class="plan-item">6 sessions per week</li>
+          <li class="plan-item">Periodised mesocycles</li>
+          <li class="plan-item">60–90 min per session</li>
+          <li class="plan-item">Advanced analytics</li>
+          <li class="plan-item">1-on-1 coaching calls</li>
+        </ul>
+        <a href="#contact" class="btn btn-outline" style="border-color:rgba(255,87,87,.3);color:var(--accent2)">Apply Now →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     STATS / COUNTERS
+     ============================================================ -->
+<section id="stats">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item reveal">
+        <div class="stat-count"><span class="count-num" data-target="50000">0</span><span class="accent-suf">+</span></div>
+        <div class="stat-label">Members Worldwide</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:.1s">
+        <div class="stat-count"><span class="count-num" data-target="200">0</span><span class="accent-suf">+</span></div>
+        <div class="stat-label">Workout Plans</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:.2s">
+        <div class="stat-count"><span class="count-num" data-target="98">0</span><span class="accent-suf">%</span></div>
+        <div class="stat-label">Satisfaction Rate</div>
+      </div>
+      <div class="stat-item reveal" style="transition-delay:.3s">
+        <div class="stat-count"><span class="count-num" data-target="15">0</span><span class="accent-suf">M+</span></div>
+        <div class="stat-label">Workouts Logged</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     TESTIMONIALS
+     ============================================================ -->
+<section id="testimonials">
+  <div class="container">
+    <div class="testimonials-head reveal">
+      <div class="section-label">Real Results</div>
+      <h2 class="section-title">What Our Members Say</h2>
+      <p class="section-sub" style="margin:0 auto">Thousands of people have transformed their bodies — here are a few of their stories.</p>
+    </div>
+    <div class="grid-3" style="margin-top:48px">
+      <div class="card testi-card reveal">
+        <div class="stars">★★★★★</div>
+        <div class="testi-quote">"</div>
+        <p class="testi-text">FitForge completely changed how I approach fitness. The analytics showed me exactly where I was holding back and the adaptive coaching was a game changer.</p>
+        <div class="testi-author">
+          <div class="testi-avatar av-y">AK</div>
+          <div>
+            <div class="testi-name">Arjun Kapoor</div>
+            <div class="testi-role">Lost 18 kg in 5 months</div>
+          </div>
+        </div>
+      </div>
+      <div class="card testi-card reveal" style="transition-delay:.1s">
+        <div class="stars">★★★★★</div>
+        <div class="testi-quote">"</div>
+        <p class="testi-text">As a busy professional, I needed something that would fit my schedule. The Elite Protocol pushed me beyond what I thought possible — all in 60 minutes a day.</p>
+        <div class="testi-author">
+          <div class="testi-avatar av-b">SR</div>
+          <div>
+            <div class="testi-name">Sara Reid</div>
+            <div class="testi-role">Gained 8 kg lean muscle</div>
+          </div>
+        </div>
+      </div>
+      <div class="card testi-card reveal" style="transition-delay:.2s">
+        <div class="stars">★★★★★</div>
+        <div class="testi-quote">"</div>
+        <p class="testi-text">The nutrition integration is unreal. Knowing exactly what to eat around each session made my progress accelerate faster than any other app I've tried.</p>
+        <div class="testi-author">
+          <div class="testi-avatar av-r">MC</div>
+          <div>
+            <div class="testi-name">Miguel Carvalho</div>
+            <div class="testi-role">Reduced body fat by 12%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CONTACT
+     ============================================================ -->
+<section id="contact">
+  <div class="container">
+    <div class="contact-wrap">
+      <div class="contact-info reveal">
+        <div class="section-label">Get In Touch</div>
+        <h2 class="section-title">Start Your<br>Journey Today</h2>
+        <p>Have questions or ready to commit? Reach out and our team will craft a personalised plan just for you.</p>
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          <div>
+            <h4>Location</h4>
+            <p>Available worldwide — fully remote</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">📧</div>
+          <div>
+            <h4>Email</h4>
+            <p>hello@fitforge.app</p>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">⏰</div>
+          <div>
+            <h4>Response Time</h4>
+            <p>Under 24 hours, Mon–Fri</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" style="transition-delay:.1s">
+        <div class="contact-form" id="contactForm">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="form-group">
+              <input type="text" id="cf-name" placeholder="Your Name"/>
+              <div class="form-error" id="err-name">Please enter your name.</div>
+            </div>
+            <div class="form-group">
+              <input type="email" id="cf-email" placeholder="Email Address"/>
+              <div class="form-error" id="err-email">Please enter a valid email.</div>
+            </div>
+          </div>
+          <div class="form-group">
+            <select id="cf-plan">
+              <option value="">Select a Plan (optional)</option>
+              <option>Foundation Build – Beginner</option>
+              <option>Power Surge – Intermediate</option>
+              <option>Elite Protocol – Advanced</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <textarea id="cf-msg" placeholder="Tell us about your goals…"></textarea>
+            <div class="form-error" id="err-msg">Please write a message.</div>
+          </div>
+          <div class="form-success" id="formSuccess">✅ Message sent! We'll get back to you within 24 hours.</div>
+          <button class="btn btn-primary" onclick="submitForm()" style="align-self:flex-start">
+            Send Message
+            <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     WORKOUT LOG — FULL CRUD
+     ============================================================ -->
+<section id="workout-log">
+  <div class="container">
+    <div class="wl-head reveal">
+      <div class="section-label">My Training Journal</div>
+      <h2 class="section-title">Workout Log</h2>
+      <p class="section-sub">Track every session. Create, edit, search, and delete your workout entries — your personal training history at a glance.</p>
+    </div>
+
+    <!-- SUMMARY STRIP -->
+    <div class="wl-summary reveal">
+      <div class="wl-sum-card">
+        <div class="wl-sum-num" id="sum-total">0</div>
+        <div class="wl-sum-label">Total Sessions</div>
+      </div>
+      <div class="wl-sum-card">
+        <div class="wl-sum-num" id="sum-week">0</div>
+        <div class="wl-sum-label">This Week</div>
+      </div>
+      <div class="wl-sum-card">
+        <div class="wl-sum-num" id="sum-volume">0</div>
+        <div class="wl-sum-label">Total Sets Logged</div>
+      </div>
+      <div class="wl-sum-card">
+        <div class="wl-sum-num" id="sum-streak">0</div>
+        <div class="wl-sum-label">Day Streak 🔥</div>
+      </div>
+    </div>
+
+    <!-- CREATE / EDIT FORM -->
+    <div class="wl-form-wrap reveal">
+      <div class="wl-form-title">
+        <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><path d="M10 4v12M4 10h12" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round"/></svg>
+        <span id="formModeLabel">Log New Workout</span>
+      </div>
+      <div class="wl-form-grid">
+        <div>
+          <label class="wl-label" for="wl-date">Date</label>
+          <input class="wl-input" type="date" id="wl-date"/>
+        </div>
+        <div>
+          <label class="wl-label" for="wl-exercise">Exercise / Activity</label>
+          <input class="wl-input" type="text" id="wl-exercise" placeholder="e.g. Bench Press"/>
+        </div>
+        <div>
+          <label class="wl-label" for="wl-category">Category</label>
+          <select class="wl-select" id="wl-category">
+            <option value="strength">Strength</option>
+            <option value="cardio">Cardio</option>
+            <option value="hiit">HIIT</option>
+            <option value="mobility">Mobility</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="wl-form-grid">
+        <div>
+          <label class="wl-label" for="wl-sets">Sets</label>
+          <input class="wl-input" type="number" id="wl-sets" placeholder="e.g. 4" min="1"/>
+        </div>
+        <div>
+          <label class="wl-label" for="wl-reps">Reps</label>
+          <input class="wl-input" type="number" id="wl-reps" placeholder="e.g. 10" min="1"/>
+        </div>
+        <div>
+          <label class="wl-label" for="wl-weight">Weight (kg)</label>
+          <input class="wl-input" type="number" id="wl-weight" placeholder="e.g. 80" step="0.5" min="0"/>
+        </div>
+      </div>
+      <div class="wl-form-grid-2">
+        <div>
+          <label class="wl-label" for="wl-duration">Duration (min)</label>
+          <input class="wl-input" type="number" id="wl-duration" placeholder="e.g. 45" min="1"/>
+        </div>
+        <div>
+          <label class="wl-label" for="wl-rpe">RPE (1–10)</label>
+          <input class="wl-input" type="number" id="wl-rpe" placeholder="Rate of Perceived Effort" min="1" max="10"/>
+        </div>
+      </div>
+      <div class="wl-form-full">
+        <label class="wl-label" for="wl-notes">Notes</label>
+        <textarea class="wl-textarea" id="wl-notes" placeholder="How did it feel? Any PBs or form cues to remember…"></textarea>
+      </div>
+      <div class="wl-form-actions">
+        <button class="btn-save" onclick="wlSave()">
+          <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <span id="saveBtnLabel">Save Entry</span>
+        </button>
+        <button class="btn-cancel-edit" id="cancelEditBtn" onclick="wlCancelEdit()">✕ Cancel Edit</button>
+        <span class="wl-save-flash" id="saveFlash">✅ Entry saved!</span>
+      </div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="wl-controls reveal">
+      <div class="wl-search-wrap">
+        <svg width="16" height="16" fill="none" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input class="wl-search" id="wlSearch" type="text" placeholder="Search exercise or notes…" oninput="wlRender()"/>
+      </div>
+      <select class="wl-filter-select" id="wlCatFilter" onchange="wlRender()">
+        <option value="">All Categories</option>
+        <option value="strength">Strength</option>
+        <option value="cardio">Cardio</option>
+        <option value="hiit">HIIT</option>
+        <option value="mobility">Mobility</option>
+        <option value="other">Other</option>
+      </select>
+      <select class="wl-filter-select" id="wlSortFilter" onchange="wlRender()">
+        <option value="date-desc">Newest First</option>
+        <option value="date-asc">Oldest First</option>
+        <option value="exercise-asc">Exercise A–Z</option>
+        <option value="weight-desc">Heaviest First</option>
+      </select>
+      <span class="wl-count-badge" id="wlCountBadge">0 entries</span>
+    </div>
+
+    <!-- TABLE -->
+    <div class="wl-table-wrap reveal">
+      <table class="wl-table" id="wlTable">
+        <thead>
+          <tr>
+            <th onclick="wlSortBy('date')">Date <span class="sort-icon">↕</span></th>
+            <th onclick="wlSortBy('exercise')">Exercise <span class="sort-icon">↕</span></th>
+            <th>Category</th>
+            <th onclick="wlSortBy('sets')">Sets <span class="sort-icon">↕</span></th>
+            <th onclick="wlSortBy('reps')">Reps <span class="sort-icon">↕</span></th>
+            <th onclick="wlSortBy('weight')">kg <span class="sort-icon">↕</span></th>
+            <th>Min</th>
+            <th>Notes</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="wlTbody"></tbody>
+      </table>
+      <div class="wl-empty" id="wlEmpty" style="display:none">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none"><rect x="8" y="16" width="48" height="36" rx="6" stroke="white" stroke-width="2"/><path d="M22 28h20M22 36h12" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M22 10l4 6M42 10l-4 6" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+        <p>No workouts found. Log your first session above!</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="wl-modal-overlay" id="wlDeleteModal">
+  <div class="wl-modal">
+    <div style="font-size:2.4rem;margin-bottom:14px">🗑️</div>
+    <h3>Delete Entry?</h3>
+    <p>This workout log entry will be permanently removed. This action cannot be undone.</p>
+    <div class="wl-modal-actions">
+      <button class="btn-confirm-del" id="confirmDelBtn">Yes, Delete</button>
+      <button class="btn-cancel-del" onclick="wlCloseModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#hero" class="nav-logo" style="font-size:1.4rem">Fit<span>Forge</span></a>
+      <p>The ultimate fitness companion for those who train with purpose. Track, adapt, and conquer.</p>
+      <div class="social-links">
+        <a href="#" class="social-link" title="Twitter">𝕏</a>
+        <a href="#" class="social-link" title="Instagram">📷</a>
+        <a href="#" class="social-link" title="YouTube">▶</a>
+        <a href="#" class="social-link" title="LinkedIn">in</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Product</h4>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#plans">Pricing</a></li>
+        <li><a href="#bmi">BMI Tool</a></li>
+        <li><a href="#">Changelog</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Company</h4>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Legal</h4>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#">Cookie Policy</a></li>
+        <li><a href="#">GDPR</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2025 FitForge. All rights reserved.</p>
+    <div class="made">Made with <span>♥</span> for athletes everywhere</div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* ---- PRELOADER ---- */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('preloader').classList.add('hide');
+  }, 600);
+});
+
+/* ---- NAVBAR SCROLL ---- */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 40);
+}, { passive: true });
+
+/* ---- HAMBURGER / MOBILE MENU ---- */
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+hamburger.addEventListener('click', () => {
+  const open = hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('open', open);
+});
+document.querySelectorAll('.mob-link, .mobile-menu .btn').forEach(link => {
+  link.addEventListener('click', () => {
+    hamburger.classList.remove('open');
+    mobileMenu.classList.remove('open');
+  });
+});
+
+/* ---- SCROLL REVEAL ---- */
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.classList.add('visible');
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+/* ---- ANIMATED COUNTERS ---- */
+let countersDone = false;
+const countersObserver = new IntersectionObserver((entries) => {
+  if (entries[0].isIntersecting && !countersDone) {
+    countersDone = true;
+    document.querySelectorAll('.count-num').forEach(el => {
+      const target = +el.dataset.target;
+      const duration = 1800;
+      const step = target / (duration / 16);
+      let current = 0;
+      const update = () => {
+        current = Math.min(current + step, target);
+        el.textContent = Math.floor(current).toLocaleString();
+        if (current < target) requestAnimationFrame(update);
+      };
+      requestAnimationFrame(update);
+    });
+  }
+}, { threshold: 0.4 });
+const statsSection = document.getElementById('stats');
+if (statsSection) countersObserver.observe(statsSection);
+
+/* ---- BMI CALCULATOR ---- */
+function calcBMI() {
+  const hVal = parseFloat(document.getElementById('bmi-height').value);
+  const wVal = parseFloat(document.getElementById('bmi-weight').value);
+  const hUnit = document.getElementById('bmi-height-unit').value;
+  const wUnit = document.getElementById('bmi-weight-unit').value;
+  const panel = document.getElementById('bmiPanel');
+
+  if (!hVal || !wVal || hVal <= 0 || wVal <= 0) {
+    panel.innerHTML = `<p style="color:var(--accent2);font-weight:600">⚠️ Please enter valid height and weight.</p>`;
+    return;
+  }
+
+  let heightM = hUnit === 'cm' ? hVal / 100 : hVal * 0.3048;
+  let weightKg = wUnit === 'lbs' ? wVal * 0.453592 : wVal;
+  const bmi = weightKg / (heightM * heightM);
+  const bmiRounded = bmi.toFixed(1);
+
+  let category, color, tip, barPct;
+  if (bmi < 18.5) {
+    category = 'Underweight'; color = '#47d4ff'; barPct = 15;
+    tip = 'Focus on nutrient-dense foods and strength training to build healthy mass.';
+  } else if (bmi < 25) {
+    category = 'Normal Weight'; color = '#e8ff47'; barPct = 45;
+    tip = 'Great baseline! Maintain with balanced nutrition and consistent training.';
+  } else if (bmi < 30) {
+    category = 'Overweight'; color = '#ffb347'; barPct = 68;
+    tip = 'A mix of cardio and resistance training combined with calorie monitoring will help.';
+  } else {
+    category = 'Obese'; color = '#ff5757'; barPct = 88;
+    tip = 'Consider consulting a healthcare professional alongside your fitness journey.';
+  }
+
+  panel.innerHTML = `
+    <p style="font-size:.78rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Your BMI</p>
+    <div class="bmi-num" style="color:${color}">${bmiRounded}</div>
+    <div class="bmi-category" style="color:${color}">${category}</div>
+    <div class="bmi-bar-track" style="width:100%">
+      <div class="bmi-bar-fill" style="background:${color};width:0%"></div>
+    </div>
+    <p class="bmi-tip">${tip}</p>
+  `;
+  // animate bar
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      panel.querySelector('.bmi-bar-fill').style.width = barPct + '%';
+    }, 50);
+  });
+}
+
+/* ---- CONTACT FORM VALIDATION ---- */
+function submitForm() {
+  const name  = document.getElementById('cf-name').value.trim();
+  const email = document.getElementById('cf-email').value.trim();
+  const msg   = document.getElementById('cf-msg').value.trim();
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  let valid = true;
+  const show = (id, show) => { document.getElementById(id).style.display = show ? 'block' : 'none'; };
+
+  show('err-name',  !name);
+  show('err-email', !emailRe.test(email));
+  show('err-msg',   !msg);
+
+  if (!name || !emailRe.test(email) || !msg) return;
+
+  const success = document.getElementById('formSuccess');
+  success.style.display = 'block';
+  document.getElementById('cf-name').value = '';
+  document.getElementById('cf-email').value = '';
+  document.getElementById('cf-msg').value = '';
+  setTimeout(() => { success.style.display = 'none'; }, 6000);
+}
+
+/* ---- SMOOTH SCROLL offset for fixed navbar ---- */
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    const target = document.querySelector(this.getAttribute('href'));
+    if (!target) return;
+    e.preventDefault();
+    const offset = 80;
+    window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' });
+  });
+});
+
+/* ================================================================
+   WORKOUT LOG — FULL CRUD ENGINE
+   ================================================================ */
+
+/* ── DATA STORE ── */
+let wlData = JSON.parse(localStorage.getItem('fitforge_workouts') || '[]');
+let wlEditId = null;
+let wlDeleteId = null;
+let wlSortCol = 'date';
+let wlSortDir = 'desc';
+
+function wlPersist() {
+  localStorage.setItem('fitforge_workouts', JSON.stringify(wlData));
+}
+
+/* seed sample data on first visit */
+if (wlData.length === 0) {
+  const today = new Date();
+  const fmt = d => d.toISOString().split('T')[0];
+  const dayAgo = n => { const d = new Date(today); d.setDate(d.getDate()-n); return fmt(d); };
+  wlData = [
+    { id: Date.now()+1, date: dayAgo(0), exercise: 'Barbell Squat',   category: 'strength', sets: 5, reps: 5,  weight: 100, duration: 60, rpe: 8, notes: 'New 5RM PR! Depth felt solid.' },
+    { id: Date.now()+2, date: dayAgo(1), exercise: '5K Run',           category: 'cardio',   sets: 1, reps: 1,  weight: 0,   duration: 28, rpe: 7, notes: 'Zone 2 easy pace, great morning.' },
+    { id: Date.now()+3, date: dayAgo(2), exercise: 'Bench Press',      category: 'strength', sets: 4, reps: 8,  weight: 80,  duration: 45, rpe: 7, notes: 'Paused reps on last set.' },
+    { id: Date.now()+4, date: dayAgo(3), exercise: 'Tabata Circuit',   category: 'hiit',     sets: 8, reps: 20, weight: 0,   duration: 25, rpe: 9, notes: 'Burpees + kettlebell swings.' },
+    { id: Date.now()+5, date: dayAgo(5), exercise: 'Deadlift',         category: 'strength', sets: 3, reps: 3,  weight: 140, duration: 50, rpe: 9, notes: 'Conventional stance, belt on.' },
+    { id: Date.now()+6, date: dayAgo(6), exercise: 'Yoga Flow',        category: 'mobility', sets: 1, reps: 1,  weight: 0,   duration: 40, rpe: 4, notes: 'Hip flexors and thoracic spine work.' },
+  ];
+  wlPersist();
+}
+
+/* ── HELPERS ── */
+function wlGenId() { return Date.now() + Math.floor(Math.random()*1000); }
+
+function wlCatPill(cat) {
+  const map = { strength:'cat-strength', cardio:'cat-cardio', hiit:'cat-hiit', mobility:'cat-mobility', other:'cat-other' };
+  const label = cat.charAt(0).toUpperCase()+cat.slice(1);
+  return `<span class="wl-cat-pill ${map[cat]||'cat-other'}">${label}</span>`;
+}
+
+function wlSetToday() {
+  document.getElementById('wl-date').value = new Date().toISOString().split('T')[0];
+}
+
+/* ── SUMMARY STATS ── */
+function wlUpdateSummary() {
+  const total = wlData.length;
+  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
+  const thisWeek = wlData.filter(e => new Date(e.date) >= weekAgo).length;
+  const volume = wlData.reduce((a,e) => a + (parseInt(e.sets)||0), 0);
+
+  /* simple streak: consecutive days with at least one workout */
+  const days = [...new Set(wlData.map(e=>e.date))].sort().reverse();
+  let streak = 0;
+  const todayStr = new Date().toISOString().split('T')[0];
+  const cursor = new Date(todayStr);
+  for (const d of days) {
+    if (d === cursor.toISOString().split('T')[0]) {
+      streak++;
+      cursor.setDate(cursor.getDate()-1);
+    } else break;
+  }
+  /* also count streak starting from yesterday if nothing logged today */
+  if (streak === 0 && days.length > 0) {
+    const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+    const yStr = yesterday.toISOString().split('T')[0];
+    const cur2 = new Date(yStr);
+    for (const d of days) {
+      if (d === cur2.toISOString().split('T')[0]) {
+        streak++;
+        cur2.setDate(cur2.getDate()-1);
+      } else break;
+    }
+  }
+
+  document.getElementById('sum-total').textContent = total;
+  document.getElementById('sum-week').textContent = thisWeek;
+  document.getElementById('sum-volume').textContent = volume;
+  document.getElementById('sum-streak').textContent = streak;
+}
+
+/* ── RENDER TABLE ── */
+function wlRender() {
+  const search = document.getElementById('wlSearch').value.toLowerCase();
+  const catF   = document.getElementById('wlCatFilter').value;
+  const sort   = document.getElementById('wlSortFilter').value;
+  const tbody  = document.getElementById('wlTbody');
+  const empty  = document.getElementById('wlEmpty');
+
+  let rows = wlData.filter(e => {
+    const matchSearch = !search || e.exercise.toLowerCase().includes(search) || (e.notes||'').toLowerCase().includes(search);
+    const matchCat = !catF || e.category === catF;
+    return matchSearch && matchCat;
+  });
+
+  /* sort */
+  const [col, dir] = sort.includes('-') ? sort.split('-') : [wlSortCol, wlSortDir];
+  rows.sort((a,b) => {
+    let av = a[col]||'', bv = b[col]||'';
+    if (col==='date')     { av=a.date; bv=b.date; }
+    if (col==='weight')   { av=parseFloat(a.weight)||0; bv=parseFloat(b.weight)||0; }
+    if (col==='exercise') { av=a.exercise.toLowerCase(); bv=b.exercise.toLowerCase(); }
+    if (av < bv) return dir==='asc' ? -1 : 1;
+    if (av > bv) return dir==='asc' ? 1 : -1;
+    return 0;
+  });
+
+  document.getElementById('wlCountBadge').textContent = `${rows.length} entr${rows.length===1?'y':'ies'}`;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    wlUpdateSummary();
+    return;
+  }
+  empty.style.display = 'none';
+
+  tbody.innerHTML = rows.map(e => `
+    <tr id="row-${e.id}" class="${wlEditId===e.id?'editing-row':''}">
+      <td class="wl-date-cell">${formatDate(e.date)}</td>
+      <td class="wl-exercise-cell">${escHtml(e.exercise)}</td>
+      <td>${wlCatPill(e.category)}</td>
+      <td class="wl-sets-cell">${e.sets||'—'}</td>
+      <td class="wl-reps-cell">${e.reps||'—'}</td>
+      <td class="wl-weight-cell">${e.weight ? e.weight+'kg' : '—'}</td>
+      <td class="wl-dur-cell">${e.duration ? e.duration+'m' : '—'}</td>
+      <td class="wl-note-cell"><span title="${escHtml(e.notes||'')}">${escHtml(e.notes||'—')}</span></td>
+      <td class="wl-actions-cell">
+        <button class="btn-edit" onclick="wlEdit(${e.id})">✏️ Edit</button>
+        <button class="btn-delete" onclick="wlConfirmDelete(${e.id})">🗑️ Del</button>
+      </td>
+    </tr>
+  `).join('');
+
+  wlUpdateSummary();
+}
+
+function formatDate(iso) {
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── CREATE ── */
+function wlGetForm() {
+  return {
+    date:     document.getElementById('wl-date').value,
+    exercise: document.getElementById('wl-exercise').value.trim(),
+    category: document.getElementById('wl-category').value,
+    sets:     parseInt(document.getElementById('wl-sets').value)||null,
+    reps:     parseInt(document.getElementById('wl-reps').value)||null,
+    weight:   parseFloat(document.getElementById('wl-weight').value)||null,
+    duration: parseInt(document.getElementById('wl-duration').value)||null,
+    rpe:      parseInt(document.getElementById('wl-rpe').value)||null,
+    notes:    document.getElementById('wl-notes').value.trim(),
+  };
+}
+
+function wlClearForm() {
+  document.getElementById('wl-exercise').value = '';
+  document.getElementById('wl-sets').value = '';
+  document.getElementById('wl-reps').value = '';
+  document.getElementById('wl-weight').value = '';
+  document.getElementById('wl-duration').value = '';
+  document.getElementById('wl-rpe').value = '';
+  document.getElementById('wl-notes').value = '';
+  wlSetToday();
+}
+
+function wlSave() {
+  const f = wlGetForm();
+  if (!f.date || !f.exercise) {
+    alert('Please fill in at least the Date and Exercise fields.');
+    return;
+  }
+  if (wlEditId !== null) {
+    /* UPDATE */
+    const idx = wlData.findIndex(e => e.id === wlEditId);
+    if (idx > -1) wlData[idx] = { ...wlData[idx], ...f };
+    wlEditId = null;
+    document.getElementById('formModeLabel').textContent = 'Log New Workout';
+    document.getElementById('saveBtnLabel').textContent = 'Save Entry';
+    document.getElementById('cancelEditBtn').classList.remove('visible');
+  } else {
+    /* CREATE */
+    wlData.unshift({ id: wlGenId(), ...f });
+  }
+  wlPersist();
+  wlClearForm();
+  wlRender();
+  /* flash */
+  const flash = document.getElementById('saveFlash');
+  flash.classList.add('show');
+  setTimeout(() => flash.classList.remove('show'), 2800);
+}
+
+/* ── READ / SORT ── */
+function wlSortBy(col) {
+  if (wlSortCol === col) wlSortDir = wlSortDir==='asc'?'desc':'asc';
+  else { wlSortCol = col; wlSortDir = 'desc'; }
+  document.querySelectorAll('.wl-table th').forEach(th => th.classList.remove('sorted'));
+  document.querySelectorAll('.wl-table th .sort-icon').forEach(s => s.textContent='↕');
+  /* find matching th by click handler attr and highlight */
+  document.querySelectorAll('.wl-table th').forEach(th => {
+    if (th.getAttribute('onclick') === `wlSortBy('${col}')`) {
+      th.classList.add('sorted');
+      th.querySelector('.sort-icon').textContent = wlSortDir==='asc' ? '↑' : '↓';
+    }
+  });
+  document.getElementById('wlSortFilter').value = col + '-' + wlSortDir;
+  wlRender();
+}
+
+/* ── UPDATE ── */
+function wlEdit(id) {
+  const e = wlData.find(x => x.id === id);
+  if (!e) return;
+  wlEditId = id;
+  document.getElementById('wl-date').value     = e.date;
+  document.getElementById('wl-exercise').value = e.exercise;
+  document.getElementById('wl-category').value = e.category;
+  document.getElementById('wl-sets').value     = e.sets || '';
+  document.getElementById('wl-reps').value     = e.reps || '';
+  document.getElementById('wl-weight').value   = e.weight || '';
+  document.getElementById('wl-duration').value = e.duration || '';
+  document.getElementById('wl-rpe').value      = e.rpe || '';
+  document.getElementById('wl-notes').value    = e.notes || '';
+  document.getElementById('formModeLabel').textContent = '✏️ Editing Entry';
+  document.getElementById('saveBtnLabel').textContent = 'Update Entry';
+  document.getElementById('cancelEditBtn').classList.add('visible');
+  /* highlight row */
+  wlRender();
+  /* scroll to form */
+  document.querySelector('.wl-form-wrap').scrollIntoView({ behavior:'smooth', block:'start' });
+  setTimeout(() => window.scrollBy(0,-100), 400);
+}
+
+function wlCancelEdit() {
+  wlEditId = null;
+  wlClearForm();
+  document.getElementById('formModeLabel').textContent = 'Log New Workout';
+  document.getElementById('saveBtnLabel').textContent = 'Save Entry';
+  document.getElementById('cancelEditBtn').classList.remove('visible');
+  wlRender();
+}
+
+/* ── DELETE ── */
+function wlConfirmDelete(id) {
+  wlDeleteId = id;
+  document.getElementById('wlDeleteModal').classList.add('open');
+  document.getElementById('confirmDelBtn').onclick = wlDeleteConfirmed;
+}
+
+function wlDeleteConfirmed() {
+  if (wlDeleteId !== null) {
+    wlData = wlData.filter(e => e.id !== wlDeleteId);
+    wlPersist();
+    if (wlEditId === wlDeleteId) wlCancelEdit();
+    wlDeleteId = null;
+    wlRender();
+  }
+  wlCloseModal();
+}
+
+function wlCloseModal() {
+  document.getElementById('wlDeleteModal').classList.remove('open');
+  wlDeleteId = null;
+}
+
+/* close modal on overlay click */
+document.getElementById('wlDeleteModal').addEventListener('click', function(e) {
+  if (e.target === this) wlCloseModal();
+});
+
+/* ── INIT ── */
+wlSetToday();
+wlRender();
+</script>
+</body>
+</html>
